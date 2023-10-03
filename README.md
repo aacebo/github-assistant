@@ -1,2 +1,2 @@
-# github-repo-assistant
+# GitHub Assistant
  
