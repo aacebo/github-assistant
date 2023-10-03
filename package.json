@@ -1,0 +1,29 @@
+{
+  "name": "github-repo-assistant",
+  "version": "1.0.0",
+  "description": "a conversational assistant for your repository",
+  "author": "Alexander Acebo",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p .",
+    "start": "node -r dotenv/config .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "chatgpt",
+    "github",
+    "bot"
+  ],
+  "dependencies": {
+    "debug": "^4.3.4",
+    "dotenv": "^16.3.1",
+    "octokit": "^3.1.1",
+    "openai": "^4.11.0"
+  },
+  "devDependencies": {
+    "@types/debug": "^4.1.9",
+    "@types/node": "^20.8.0",
+    "typescript": "^5.2.2"
+  }
+}
