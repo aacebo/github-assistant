@@ -1,8 +1,7 @@
 import OpenAI from 'openai';
 import { Octokit } from 'octokit';
 import { IssuesOpenedEvent } from '@octokit/webhooks-types';
-
-import { read, ContentTree } from '../read';
+import { Collection } from 'chromadb';
 
 type IssueOpenedArgs = {
   octokit: Octokit;
@@ -10,21 +9,17 @@ type IssueOpenedArgs = {
 }
 
 export function onIssueOpened(
-  storage: { [key: string]: string | ContentTree },
-  openai: OpenAI
+  openai: OpenAI,
+  collection: Collection
 ) {
   return async ({ octokit, payload }: IssueOpenedArgs) => {
     if (!payload.issue.body) return;
 
-    if (!storage[payload.repository.full_name]) {
-      storage[payload.repository.full_name] = await read(
-        octokit,
-        payload.sender.login,
-        payload.repository.name
-      );
-    }
+    const res = await collection.query({
+      nResults: 2,
+      queryTexts: payload.issue.body
+    });
 
-    const source = storage[payload.repository.full_name];
     const { data: langs } = await octokit.request('GET /repos/{owner}/{repo}/languages', {
       owner: payload.sender.login,
       repo: payload.repository.name
@@ -39,7 +34,7 @@ export function onIssueOpened(
           content: `
             you are a GitHub assistant for the repository ${payload.repository.name} ${payload.repository.url}.
             the repository source code is written in the languages: ${Object.keys(langs).join(', ')}.
-            the repository source code tree is: ${JSON.stringify(source)}.
+            the repository source code is: ${JSON.stringify(res.documents)}.
           `.trim()
         },
         { role: 'user', content: payload.issue.body }

@@ -1,13 +1,16 @@
 import debug from 'debug';
+import { Collection } from 'chromadb';
 import { Octokit } from 'octokit';
-
-export type ContentTree = {
-  [name: string]: string | ContentTree;
-};
 
 const log = debug('app');
 
-export async function read(octokit: Octokit, owner: string, repo: string, path: string = '') {
+export async function read(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  collection: Collection,
+  path: string = ''
+) {
   log(`reading ${path}...`);
 
   const { data } = await octokit.rest.repos.getContent({
@@ -16,22 +19,26 @@ export async function read(octokit: Octokit, owner: string, repo: string, path: 
     path: path
   });
 
-  const tree: ContentTree = { };
-
   if (Array.isArray(data)) {
-    const content = await Promise.all(data.map(item => read(
+    await Promise.all(data.map(item => read(
       octokit,
       owner,
       repo,
+      collection,
       item.path
     )));
-
-    for (let i = 0; i < content.length; i++) {
-      tree[data[i].name] = content[i];
-    }
   } else if (data.type === 'file') {
-    return Buffer.from(data.content, 'base64').toString('utf8');
-  }
+    const content = Buffer.from(data.content, 'base64').toString('utf8');
 
-  return tree;
+    await collection.add({
+      ids: [data.path],
+      metadatas: [{
+        name: data.name,
+        path: data.path,
+        url: data.url,
+        size: data.size
+      }],
+      documents: [content]
+    });
+  }
 }
