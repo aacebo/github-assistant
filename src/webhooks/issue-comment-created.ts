@@ -42,12 +42,13 @@ export function onIssueCommentCreated(
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
+      temperature: 0,
       messages: [
         {
           role: 'system',
           content: `
             you are a GitHub assistant for the repository ${payload.repository.name} ${payload.repository.url}.
-            the repository source code is in the languages: ${Object.keys(langs).join(', ')}.
+            the repository source code is written in the languages: ${Object.keys(langs).join(', ')}.
             the repository source code tree is: ${JSON.stringify(source)}.
           `.trim()
         },
